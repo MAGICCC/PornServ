@@ -1,0 +1,10 @@
+PornServ posts porn from Reddit (and maybe other sites one day!) to IRC. No need
+to explain why this is great.
+
+Usage:
+$ irc-porn \
+	--server irc.rizon.net \
+	--port 6697 \
+	--channel "#mychannel" \
+	--reddit NSFW_GIF,anal \
+	--nick SomeNickForTheBot
