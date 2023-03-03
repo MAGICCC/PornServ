@@ -1,5 +1,1 @@
-.tox/*
-*.egg-info
-*/__pycache__
-dist
-build
+ircporn/ircporn.dump

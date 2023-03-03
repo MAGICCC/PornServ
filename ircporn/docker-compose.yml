@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  ircporn:
+    image: ircporn:latest
+    volumes:
+      - .:/data
+    working_dir: /data
+    command: python ircporn.py
+     --server irc.rizon.net
+     --port 6697
+     --channel "#yourchannel"
+     --nick ircporn
+     --username ircporn
+     --realname ircporn
+     --reddit gonewild,porninfifteenseconds,BigBoobsGonewild
+    restart: always
+

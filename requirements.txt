@@ -1,4 +1,0 @@
-aiocron
-irc3
-# Praw>3.4.0 asks for a client_{id,secret}, and I ain't got time for that.
-praw==3.4.0

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016, Cyril Roelandt
-# Reupload by Peter Stanke (MAGIC), https://git.kthx.at/MAGIC/PornServ
+# Reupload and edited  by Peter Stanke (MAGIC), https://git.kthx.at/MAGIC/PornServ
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,16 +41,17 @@ from irc3.plugins.cron import cron
 import praw
 import requests
 
-
 CHANNEL = None
 NICK = None
+USERNAME = None
+REALNAME = None
 browsers = []
 
 
 class RedditBrowser(object):
     def __init__(self, subreddits):
-        self.reddit = praw.Reddit(user_agent='irc-porn')
-        self.dump_file = '/tmp/irc-porn-reddit.dump'
+        self.reddit = praw.Reddit(user_agent='ircporn')
+        self.dump_file = './ircporn.dump'
         self.subs = {sub_name: None for sub_name in subreddits}
         try:
             with open(self.dump_file, 'rb') as f:
@@ -73,7 +74,7 @@ class RedditBrowser(object):
 
     def parse_subreddit(self, sub):
         s = self.reddit.get_subreddit(sub)
-        posts = list(s.get_new(limit=5))
+        posts = list(s.get_new(limit=1))
         r = []
         for post in posts:
             if post.id == self.subs[sub]:
@@ -84,60 +85,6 @@ class RedditBrowser(object):
 
     def poll(self):
         return self.parse_subreddits()
-
-
-def random_nick(bot):
-    nicks = list(bot.channels[CHANNEL])
-    try:
-        nicks.remove(NICK)
-    except ValueError:
-        pass  # Weird, but eh.
-    try:
-        return random.choice(nicks)
-    except IndexError:
-        return NICK  # The bot is alone :(
-
-
-def random_message(bot):
-    version = random.randint(0, 2)
-    if version == 0:
-        return '%s, %s, %s' % (
-            random.choice([
-                'Bon', 'Alors', 'Putain'
-            ]),
-            random.choice([
-                'bande de connards',
-                'les glandus',
-                'tas de cons'
-            ]),
-            random.choice([
-                'je vous offre un peu de bon porn',
-                'du porn tout frais, pas comme les chattes de vos mères',
-                'vous allez bien vous vider les couilles'
-            ])
-        )
-    elif version == 1:
-        return random.choice([
-            'Bon, lâchez tout et attrapez vos queues.',
-            'Allez hop, c\'est l\'heure de se branler !'
-        ])
-    elif version == 2:
-        return '%s: %s' % (
-            random_nick(bot),
-            random.choice([
-                "t'as une petite bite mais tu peux participer quand même",
-                "des idées de trucs à faire avec ta copine",
-                "mate-moi ça mon cochon, tu vas aimer"
-            ]),
-        )
-
-
-def random_message_failure(bot):
-    return random.choice([
-        "Merde, j'ai pas trouvé de bon pr0n :(",
-        "Putain, les Internets sont à sec, "
-        "on dirait les burnes de %s." % random_nick(bot)
-    ])
 
 
 def https_if_possible(url):
@@ -154,19 +101,23 @@ def https_if_possible(url):
         return url
 
 
-@cron('0 10,11,12,13,14,15,16,17,18 * * 1-5')
+@cron('0 */1 * * *')
 def fetch_porn(bot):
     for browser in browsers:
         posts = list(browser.poll())
-        if posts:
-            bot.privmsg(CHANNEL, random_message(bot))
-        else:
-            bot.privmsg(CHANNEL, random_message_failure(bot))
         for (title, url) in posts:
             url = https_if_possible(url)
-            url_uid = str(uuid.uuid4())[:6]
-            bot.privmsg(CHANNEL, "%s: %s (%s)" % (url_uid, title, url))
+            bot.privmsg(CHANNEL, "\x0304NSFW\x0F %s" % (url))
 
+@irc3.event(r'(@(?P<tags>\S+) )?:(?P<ns>NickServ)!service@rizon.net'
+            r' NOTICE (?P<nick>ircporn) :This nickname is registered.*')
+def register(bot, ns=None, nick=None, **kw):
+    try:
+        password = 'password'
+    except KeyError:
+        pass
+    else:
+        bot.privmsg(ns, 'identify %s' % (password))
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
@@ -178,6 +129,10 @@ def parse_args():
                         help='Channel to join')
     parser.add_argument('--nick', required=True,
                         help='Nick used by the IRC bot')
+    parser.add_argument('--username', required=True,
+                        help='Username used by the IRC bot')
+    parser.add_argument('--realname', required=True,
+                        help='Realname used by the IRC bot')
     parser.add_argument('--reddit', required=True,
                         help='Comma-separated list of subreddits to parse')
     return parser.parse_args()
@@ -185,14 +140,18 @@ def parse_args():
 
 def main():
     args = parse_args()
-    global browsers, CHANNEL, NICK
+    global browsers, CHANNEL, NICK, REALNAME, USERNAME
     CHANNEL = args.channel
     NICK = args.nick
+    REALNAME = args.realname
+    USERNAME = args.username
     subreddits = args.reddit.split(',')
     browsers.append(RedditBrowser(subreddits))
 
     irc3.IrcBot(
         nick=NICK,
+	realname=REALNAME,
+	username=USERNAME,
         autojoins=[CHANNEL],
         host=args.server,
         port=args.port,
@@ -200,7 +159,6 @@ def main():
         ssl_verify='CERT_NONE',
         verbose=True,
         includes=[
-            'irc3.plugins.userlist',
             __name__,
         ]).run()
 
