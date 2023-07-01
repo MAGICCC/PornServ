@@ -32,6 +32,7 @@
 
 import argparse
 import itertools
+import json
 import pickle
 import random
 import uuid
@@ -42,9 +43,6 @@ import praw
 import requests
 
 CHANNEL = None
-NICK = None
-USERNAME = None
-REALNAME = None
 browsers = []
 
 
@@ -73,8 +71,8 @@ class RedditBrowser(object):
         return itertools.chain.from_iterable(r)
 
     def parse_subreddit(self, sub):
-        s = self.reddit.get_subreddit(sub)
-        posts = list(s.get_new(limit=1))
+        s = self.reddit.subreddit(sub)
+        posts = list(s.new(limit=1))
         r = []
         for post in posts:
             if post.id == self.subs[sub]:
@@ -109,58 +107,41 @@ def fetch_porn(bot):
             url = https_if_possible(url)
             bot.privmsg(CHANNEL, "\x0304NSFW\x0F %s" % (url))
 
-@irc3.event(r'(@(?P<tags>\S+) )?:(?P<ns>NickServ)!service@rizon.net'
-            r' NOTICE (?P<nick>ircporn) :This nickname is registered.*')
-def register(bot, ns=None, nick=None, **kw):
-    try:
-        password = 'password'
-    except KeyError:
-        pass
-    else:
-        bot.privmsg(ns, 'identify %s' % (password))
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--server', required=True,
-                        help='IRC server to connect to')
-    parser.add_argument('--port', required=True, type=int,
-                        help='Port to use to connect to IRC')
-    parser.add_argument('--channel', required=True,
-                        help='Channel to join')
-    parser.add_argument('--nick', required=True,
-                        help='Nick used by the IRC bot')
-    parser.add_argument('--username', required=True,
-                        help='Username used by the IRC bot')
-    parser.add_argument('--realname', required=True,
-                        help='Realname used by the IRC bot')
-    parser.add_argument('--reddit', required=True,
-                        help='Comma-separated list of subreddits to parse')
+    parser.add_argument('--config', required=True, help='Path to the configuration file')
     return parser.parse_args()
+
+
+def load_config(config_path):
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+    return config
 
 
 def main():
     args = parse_args()
-    global browsers, CHANNEL, NICK, REALNAME, USERNAME
-    CHANNEL = args.channel
-    NICK = args.nick
-    REALNAME = args.realname
-    USERNAME = args.username
-    subreddits = args.reddit.split(',')
+    config = load_config(args.config)
+
+    global browsers, CHANNEL
+    CHANNEL = config['channel']
+    subreddits = config['subreddits']
     browsers.append(RedditBrowser(subreddits))
 
-    irc3.IrcBot(
-        nick=NICK,
-	realname=REALNAME,
-	username=USERNAME,
-        autojoins=[CHANNEL],
-        host=args.server,
-        port=args.port,
-        ssl=True,
-        ssl_verify='CERT_NONE',
-        verbose=True,
-        includes=[
-            __name__,
-        ]).run()
+    irc3.IrcBot.from_config({
+        'nick': config['nick'],
+        'realname': config['realname'],
+        'username': config['username'],
+        'autojoins': [config['channel']],
+        'host': config['server'],
+        'port': config['port'],
+        'ssl': True,
+        'ssl_verify': 'CERT_NONE',
+        'verbose': True,
+        'includes': [__name__],
+        'password': config['password']  # Assuming the NickServ password is provided in the config
+    }).run()
 
 
 if __name__ == '__main__':
