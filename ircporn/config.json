@@ -1,0 +1,10 @@
+{
+  "server": "irc.example.com",
+  "port": 6667,
+  "channel": "#ircporn",
+  "nick": "mybot",
+  "username": "mybot",
+  "realname": "My Bot",
+  "subreddits": ["pics", "gifs", "nsfw"],
+  "password": "password"
+}
