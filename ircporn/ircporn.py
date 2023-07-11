@@ -100,7 +100,7 @@ def main():
     browsers.append(RedditBrowser(subreddits))
 
     irc3.IrcBot.from_config({
-	    'host': config['server'],
+        'host': config['server'],
         'port': config['port'],
         'ssl': config['ssl'],
         'ssl_verify': config['ssl_verify'],
