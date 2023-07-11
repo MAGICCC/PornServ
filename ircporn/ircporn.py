@@ -41,14 +41,13 @@ import irc3
 from irc3.plugins.cron import cron
 import praw
 import requests
+import logging
 
-CHANNEL = None
 browsers = []
-
 
 class RedditBrowser(object):
     def __init__(self, subreddits):
-        self.reddit = praw.Reddit(user_agent='ircporn')
+        self.reddit = praw.Reddit("ircporn", check_for_async=False)
         self.dump_file = './ircporn.dump'
         self.subs = {sub_name: None for sub_name in subreddits}
         try:
@@ -84,7 +83,6 @@ class RedditBrowser(object):
     def poll(self):
         return self.parse_subreddits()
 
-
 def https_if_possible(url):
     if url.startswith('https://'):
         return url
@@ -98,6 +96,12 @@ def https_if_possible(url):
     except:
         return url
 
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+for logger_name in ("praw", "prawcore"):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
 
 @cron('0 */1 * * *')
 def fetch_porn(bot):
@@ -105,27 +109,24 @@ def fetch_porn(bot):
         posts = list(browser.poll())
         for (title, url) in posts:
             url = https_if_possible(url)
-            bot.privmsg(CHANNEL, "\x0304NSFW\x0F %s" % (url))
-
+            bot.privmsg(CHANNEL, f"\x0304NSFW\x0F {url}")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--config', required=True, help='Path to the configuration file')
     return parser.parse_args()
 
-
 def load_config(config_path):
     with open(config_path, 'r') as f:
         config = json.load(f)
     return config
-
 
 def main():
     args = parse_args()
     config = load_config(args.config)
 
     global browsers, CHANNEL
-    CHANNEL = config['channel']
+    CHANNEL = config['channels']
     subreddits = config['subreddits']
     browsers.append(RedditBrowser(subreddits))
 
@@ -133,16 +134,16 @@ def main():
         'nick': config['nick'],
         'realname': config['realname'],
         'username': config['username'],
-        'autojoins': [config['channel']],
+        'autojoins': config['channels'],
         'host': config['server'],
         'port': config['port'],
         'ssl': True,
         'ssl_verify': 'CERT_NONE',
         'verbose': True,
         'includes': [__name__],
-        'password': config['password']  # Assuming the NickServ password is provided in the config
+        'sasl_username': config['sasl_username'],
+        'sasl_password': config['sasl_password']
     }).run()
-
 
 if __name__ == '__main__':
     main()
