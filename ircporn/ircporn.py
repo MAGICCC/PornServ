@@ -6,7 +6,6 @@ import json
 import pickle
 import random
 import uuid
-
 import irc3
 from irc3.plugins.cron import cron
 import praw
@@ -103,13 +102,13 @@ def main():
     irc3.IrcBot.from_config({
 	    'host': config['server'],
         'port': config['port'],
-		'ssl': config['ssl'],
+        'ssl': config['ssl'],
         'ssl_verify': config['ssl_verify'],
-		'autojoins': config['channels'],
+        'autojoins': config['channels'],
         'nick': config['nick'],
-		'username': config['username'],
+        'username': config['username'],
         'realname': config['realname'],
-		'sasl_username': config['sasl_username'],
+        'sasl_username': config['sasl_username'],
         'sasl_password': config['sasl_password'],
         'verbose': True,
         'includes': [__name__]
