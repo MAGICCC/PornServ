@@ -1,0 +1,35 @@
+name: Build and push Dockerfile
+
+on:
+  schedule:
+    # At 00:00 on day-of-month 1.
+    - cron: "0 0 1 * *"
+  workflow_dispatch: # Allow to run workflow manually
+
+jobs:
+  docker_image_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64
+          file: ircporn/Dockerfile
+          push: true
+          tags: magic848/PornServ:latest
