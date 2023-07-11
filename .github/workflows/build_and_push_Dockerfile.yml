@@ -28,11 +28,6 @@ jobs:
           username: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_TOKEN }}
 
-      - name: test
-        run: |
-          sudo apt-get install -y tree
-          tree
-
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
