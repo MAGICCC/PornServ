@@ -103,13 +103,14 @@ for logger_name in ("praw", "prawcore"):
     logger.setLevel(logging.DEBUG)
     logger.addHandler(handler)
 
-@cron('0 */1 * * *')
+@cron('* * * * *')
 def fetch_porn(bot):
     for browser in browsers:
         posts = list(browser.poll())
         for (title, url) in posts:
             url = https_if_possible(url)
-            bot.privmsg(CHANNEL, f"\x0304NSFW\x0F {url}")
+            for channel in CHANNELS:
+                bot.privmsg(channel, "\x0304NSFW\x0F %s" % (url))
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
@@ -125,8 +126,8 @@ def main():
     args = parse_args()
     config = load_config(args.config)
 
-    global browsers, CHANNEL
-    CHANNEL = config['channels']
+    global browsers, CHANNELS
+    CHANNELS = config['channels']
     subreddits = config['subreddits']
     browsers.append(RedditBrowser(subreddits))
 
