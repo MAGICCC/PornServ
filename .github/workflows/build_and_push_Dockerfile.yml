@@ -1,6 +1,9 @@
 name: Build and push Dockerfile
 
 on:
+  push:
+    branches:
+      - master
   schedule:
     # At 00:00 on day-of-month 1.
     - cron: "0 0 1 * *"
@@ -25,10 +28,15 @@ jobs:
           username: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_TOKEN }}
 
+      - name: test
+        run: |
+          sudo apt-get install -y tree
+          tree
+
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ircporn/
           platforms: linux/amd64
           file: ircporn/Dockerfile
           push: true
