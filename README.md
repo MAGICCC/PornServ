@@ -39,7 +39,7 @@ version: "3"
 
 services:
   ircporn:
-    image: magic848/PornServ:latest
+    image: magic848/pornserv:latest
     volumes:
       - .:/data
     working_dir: /data

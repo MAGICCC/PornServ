@@ -32,4 +32,4 @@ jobs:
           platforms: linux/amd64
           file: ircporn/Dockerfile
           push: true
-          tags: magic848/PornServ:latest
+          tags: magic848/pornserv:latest
