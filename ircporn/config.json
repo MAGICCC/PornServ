@@ -1,0 +1,11 @@
+{
+  "server": "irc.example.net",
+  "port": 6697,
+  "channels": ["#channel1", "#channel2", "#channel3"],
+  "nick": "mybot",
+  "username": "mybot",
+  "realname": "my bot",
+  "subreddits": ["pics", "gifs", "nsfw"],
+  "sasl_username": "username",
+  "sasl_password": "password"
+}

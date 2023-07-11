@@ -32,6 +32,7 @@
 
 import argparse
 import itertools
+import json
 import pickle
 import random
 import uuid
@@ -40,17 +41,13 @@ import irc3
 from irc3.plugins.cron import cron
 import praw
 import requests
+import logging
 
-CHANNEL = None
-NICK = None
-USERNAME = None
-REALNAME = None
 browsers = []
-
 
 class RedditBrowser(object):
     def __init__(self, subreddits):
-        self.reddit = praw.Reddit(user_agent='ircporn')
+        self.reddit = praw.Reddit("ircporn", check_for_async=False)
         self.dump_file = './ircporn.dump'
         self.subs = {sub_name: None for sub_name in subreddits}
         try:
@@ -73,8 +70,8 @@ class RedditBrowser(object):
         return itertools.chain.from_iterable(r)
 
     def parse_subreddit(self, sub):
-        s = self.reddit.get_subreddit(sub)
-        posts = list(s.get_new(limit=1))
+        s = self.reddit.subreddit(sub)
+        posts = list(s.new(limit=1))
         r = []
         for post in posts:
             if post.id == self.subs[sub]:
@@ -85,7 +82,6 @@ class RedditBrowser(object):
 
     def poll(self):
         return self.parse_subreddits()
-
 
 def https_if_possible(url):
     if url.startswith('https://'):
@@ -100,6 +96,12 @@ def https_if_possible(url):
     except:
         return url
 
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+for logger_name in ("praw", "prawcore"):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
 
 @cron('0 */1 * * *')
 def fetch_porn(bot):
@@ -107,61 +109,41 @@ def fetch_porn(bot):
         posts = list(browser.poll())
         for (title, url) in posts:
             url = https_if_possible(url)
-            bot.privmsg(CHANNEL, "\x0304NSFW\x0F %s" % (url))
-
-@irc3.event(r'(@(?P<tags>\S+) )?:(?P<ns>NickServ)!service@rizon.net'
-            r' NOTICE (?P<nick>ircporn) :This nickname is registered.*')
-def register(bot, ns=None, nick=None, **kw):
-    try:
-        password = 'password'
-    except KeyError:
-        pass
-    else:
-        bot.privmsg(ns, 'identify %s' % (password))
+            bot.privmsg(CHANNEL, f"\x0304NSFW\x0F {url}")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--server', required=True,
-                        help='IRC server to connect to')
-    parser.add_argument('--port', required=True, type=int,
-                        help='Port to use to connect to IRC')
-    parser.add_argument('--channel', required=True,
-                        help='Channel to join')
-    parser.add_argument('--nick', required=True,
-                        help='Nick used by the IRC bot')
-    parser.add_argument('--username', required=True,
-                        help='Username used by the IRC bot')
-    parser.add_argument('--realname', required=True,
-                        help='Realname used by the IRC bot')
-    parser.add_argument('--reddit', required=True,
-                        help='Comma-separated list of subreddits to parse')
+    parser.add_argument('--config', required=True, help='Path to the configuration file')
     return parser.parse_args()
 
+def load_config(config_path):
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+    return config
 
 def main():
     args = parse_args()
-    global browsers, CHANNEL, NICK, REALNAME, USERNAME
-    CHANNEL = args.channel
-    NICK = args.nick
-    REALNAME = args.realname
-    USERNAME = args.username
-    subreddits = args.reddit.split(',')
+    config = load_config(args.config)
+
+    global browsers, CHANNEL
+    CHANNEL = config['channels']
+    subreddits = config['subreddits']
     browsers.append(RedditBrowser(subreddits))
 
-    irc3.IrcBot(
-        nick=NICK,
-	realname=REALNAME,
-	username=USERNAME,
-        autojoins=[CHANNEL],
-        host=args.server,
-        port=args.port,
-        ssl=True,
-        ssl_verify='CERT_NONE',
-        verbose=True,
-        includes=[
-            __name__,
-        ]).run()
-
+    irc3.IrcBot.from_config({
+        'nick': config['nick'],
+        'realname': config['realname'],
+        'username': config['username'],
+        'autojoins': config['channels'],
+        'host': config['server'],
+        'port': config['port'],
+        'ssl': True,
+        'ssl_verify': 'CERT_NONE',
+        'verbose': True,
+        'includes': [__name__],
+        'sasl_username': config['sasl_username'],
+        'sasl_password': config['sasl_password']
+    }).run()
 
 if __name__ == '__main__':
     main()
