@@ -78,7 +78,8 @@ def fetch_porn(bot):
         posts = list(browser.poll())
         for (title, url) in posts:
             url = https_if_possible(url)
-            bot.privmsg(CHANNEL, f"\x0304NSFW\x0F {url}")
+            for channel in CHANNELS:  # Send message to each channel
+                bot.privmsg(channel, f"\x0304NSFW\x0F {url}")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
@@ -94,8 +95,8 @@ def main():
     args = parse_args()
     config = load_config(args.config)
 
-    global browsers, CHANNEL
-    CHANNEL = config['channels']
+    global browsers, CHANNELS  # Use CHANNELS instead of CHANNEL
+    CHANNELS = config['channels']
     subreddits = config['subreddits']
     browsers.append(RedditBrowser(subreddits))
 
