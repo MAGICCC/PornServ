@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "timezone": "Europe/Berlin",
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate Dashboard",
+  "rebaseWhen": "auto",
+  "labels": ["renovate"],
+  "assignees": [
+    "@magiccc"
+  ],
+  "baseBranches": ["master"],
+  "enabledManagers": ["github-actions", "pip_requirements", "dockerfile"]
+}
