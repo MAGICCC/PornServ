@@ -6,6 +6,8 @@ on:
     paths:
       - README.md
       - .github/workflows/dockerhub-description.yml
+    workflow_dispatch: # Allow to run workflow manually
+    
 jobs:
   dockerHubDescription:
     runs-on: ubuntu-latest
