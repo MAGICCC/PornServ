@@ -9,7 +9,7 @@ on:
   workflow_dispatch: # Allow to run workflow manually
     
 jobs:
-  dockerHubDescription:
+  edit_dockerhub_description:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -18,8 +18,9 @@ jobs:
       uses: peter-evans/dockerhub-description@v3
       if: github.event_name != 'pull_request'
       with:
-        username: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_TOKEN }}
+        username: ${{ secrets.EDIT_DOCKERHUB_DESCRIPTION_ACTION_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.EDIT_DOCKERHUB_DESCRIPTION_ACTION_DOCKERHUB_TOKEN }}
+ }}
         repository: magic848/pornserv
         short-description: ${{ github.event.repository.description }}
         enable-url-completion: true
