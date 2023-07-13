@@ -16,9 +16,10 @@ jobs:
 
     - name: Docker Hub Description
       uses: peter-evans/dockerhub-description@v3
+      if: github.event_name != 'pull_request'
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        username: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERFILEIMAGEBUILD_ACTION_DOCKERHUB_TOKEN }}
         repository: magic848/pornserv
         short-description: ${{ github.event.repository.description }}
         enable-url-completion: true
