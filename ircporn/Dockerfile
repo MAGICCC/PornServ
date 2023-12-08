@@ -2,18 +2,13 @@ FROM alpine:3.19
 
 LABEL maintainer "MAGICCC <magic@kthx.at>"
 
-
+ARG PIP_BREAK_SYSTEM_PACKAGES=1 
 COPY requirements.txt /tmp/
 RUN apk upgrade --no-cache \
     && apk add --update --no-cache \
     tzdata \
     python3 \
-    && python3 -m ensurepip \
-    && rm -r /usr/lib/python*/ensurepip \
-    && pip3 install --upgrade pip setuptools --break-system-packages \
-    && \
-    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi \
-    && \
-    if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi \
+    py-pip \
+    && pip3 install --upgrade pip setuptools \
     && rm -r /root/.cache \
-    && pip3 install --requirement /tmp/requirements.txt --break-system-packages
+    && pip3 install --requirement /tmp/requirements.txt
